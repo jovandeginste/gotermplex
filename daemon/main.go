@@ -30,7 +30,7 @@ func dataHandler(c net.Conn, input chan<- []byte) {
 	fmt.Println("\n## End of transmission.")
 }
 
-func bash(input <-chan []byte, output chan<- []byte) {
+func bash(input <-chan []byte, output chan<- byte) {
 	c := exec.Command("/bin/bash", "-l")
 	f, err := pty.Start(c)
 	if err != nil {
@@ -47,29 +47,27 @@ func bash(input <-chan []byte, output chan<- []byte) {
 	v := make([]byte, 1)
 	for {
 		n, err := f.Read(v)
-		if n > 0 && err == nil {
-			fmt.Print(string(v))
-			output <- v
+		if n >= 0 && err == nil {
+			output <- v[0]
 		}
 	}
 }
 
-func outputMuxer(output <-chan []byte) {
-	v := make([]byte, 1)
+func outputMuxer(output <-chan byte) {
+	var v byte
 
 	for {
 		v = <-output
 
-		fmt.Print(string(v))
 		for _, c := range clients {
-			c.Write(v)
+			c.Write([]byte{v})
 		}
 	}
 }
 
 func main() {
 	input := make(chan []byte, 0)
-	output := make(chan []byte, 0)
+	output := make(chan byte, 0)
 	l, err := net.Listen("unix", "/tmp/example.sock")
 	if err != nil {
 		log.Fatal(err)
