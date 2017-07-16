@@ -47,7 +47,7 @@ func bash(input <-chan []byte, output chan<- byte) {
 	v := make([]byte, 1)
 	for {
 		n, err := f.Read(v)
-		if n >= 0 && err == nil {
+		if n > 0 && err == nil {
 			output <- v[0]
 		}
 	}
